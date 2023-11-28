@@ -57,7 +57,8 @@ int main() {
         double F_value = cos(x) * cos(x); // Вычисляем значение библиотечной функции
         double delta = sqrt(fabs(f_value * f_value - F_value)); // Вычисляем невязку
         
-        cout << setw(15) << setprecision(6) << x << " | " << setw(15) << f_value << " | " << setw(15) << F_value << " | " << setw(15) << delta << endl;
+        cout << scientific << setw(15) << setprecision(6) << x << " | " << (fabs(f_value) > 1e-10 ? scientific : fixed) << setw(15) << f_value << " | " 
+             << (fabs(F_value) > 1e-10 ? scientific : fixed) << setw(15) << F_value << " | " << scientific << setw(15) << delta << endl;
     }
 
     cout << setw(13) << "Таблица 2:" << endl;
@@ -69,7 +70,10 @@ int main() {
         double F_ideal = cos(x_ideal) * cos(x_ideal); // Вычисляем значение библиотечной функции для x_ideal
         double delta_ideal = sqrt(fabs(f_ideal * f_ideal - F_ideal)); // Вычисляем невязку для x_ideal
         
-        cout << setw(15) << setprecision(7) << fixed << current_epsilon << " | " << setw(15) << f_ideal << " | " << setw(15) << F_ideal << " | " << setw(15) << delta_ideal << endl;
+        cout << scientific << setw(15) << setprecision(7) << current_epsilon << " | " 
+             << (fabs(f_ideal) > 1e-10 ? scientific : fixed) << setw(15) << f_ideal << " | " 
+             << (fabs(F_ideal) > 1e-10 ? scientific : fixed) << setw(15) << F_ideal << " | " 
+             << scientific << setw(15) << delta_ideal << endl;
     }
 
     return 0;
