@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cmath>
 #include <iomanip>
+#include <limits>
 
 using namespace std;
 
@@ -17,16 +18,36 @@ double f(double x, int n) {
 
 int main() {
     double epsilon, x_start, x_end, delta_x, x_ideal;
-    cout << "Введите точность ε: ";
-    cin >> epsilon;
+    cout << "Введите точность ε (от 1e-1 до 1e-7): ";
+    while (!(cin >> epsilon) || epsilon < 1e-7 || epsilon > 1e-1) {
+        cout << "Ошибка! Пожалуйста, введите точность ε от 1e-1 до 1e-7: ";
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    }
     cout << "Введите начало отрезка x_start: ";
-    cin >> x_start;
+    while (!(cin >> x_start)) {
+        cout << "Ошибка! Пожалуйста, введите числовое значение для начала отрезка x_start: ";
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    }
     cout << "Введите конец отрезка x_end: ";
-    cin >> x_end;
+    while (!(cin >> x_end)) {
+        cout << "Ошибка! Пожалуйста, введите числовое значение для конца отрезка x_end: ";
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    }
     cout << "Введите шаг Δx: ";
-    cin >> delta_x;
+    while (!(cin >> delta_x)) {
+        cout << "Ошибка! Пожалуйста, введите числовое значение для шага Δx: ";
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    }
     cout << "Введите значение x_ideal: ";
-    cin >> x_ideal;
+    while (!(cin >> x_ideal)) {
+        cout << "Ошибка! Пожалуйста, введите числовое значение для x_ideal: ";
+        cin.clear();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    }
 
     cout << setw(13) << "Таблица 1:" << endl;
     cout << setw(15) << "x" << " | " << setw(15) << "f(x)" << " | " << setw(15) << "F(x)" << " | " << setw(15) << "δ" << endl;
