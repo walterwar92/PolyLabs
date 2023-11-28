@@ -61,7 +61,7 @@ int main() {
     }
 
     cout << setw(13) << "Таблица 2:" << endl;
-    cout << setw(16) << "ε" << " | " << setw(15) << "f(x_ideal)" << " | " << setw(15) << "F(x_ideal)" << " | " << setw(15) << "δ" << endl;
+    cout << setw(15) << "ε" << " | " << setw(15) << "f(x_ideal)" << " | " << setw(15) << "F(x_ideal)" << " | " << setw(15) << "δ" << endl;
 
     for (int i = 1; i <= 7; ++i) {
         double current_epsilon = pow(10, -i);
@@ -69,7 +69,7 @@ int main() {
         double F_ideal = cos(x_ideal) * cos(x_ideal); // Вычисляем значение библиотечной функции для x_ideal
         double delta_ideal = sqrt(fabs(f_ideal * f_ideal - F_ideal)); // Вычисляем невязку для x_ideal
         
-        cout << setw(15) << setprecision(7) << current_epsilon << " | " << setw(15) << f_ideal << " | " << setw(15) << F_ideal << " | " << setw(15) << delta_ideal << endl;
+        cout << setw(15) << setprecision(7) << fixed << current_epsilon << " | " << setw(15) << f_ideal << " | " << setw(15) << F_ideal << " | " << setw(15) << delta_ideal << endl;
     }
 
     return 0;
