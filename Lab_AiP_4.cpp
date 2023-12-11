@@ -1,79 +1,125 @@
 #include <iostream>
 #include <cmath>
 #include <iomanip>
+#include <vector>
 #include <limits>
+#include <string>
 
 using namespace std;
 
-// Рядная функция
-double f(double x, int n) {
+// Функция для вычисления биномиального коэффициента
+double binom(int n, int k) {
+    if (k == 0 || k == n) {
+        return 1.0;
+    } else {
+        return binom(n - 1, k - 1) + binom(n - 1, k);
+    }
+}
+
+// Функция для вычисления факториала
+double fact(int n) {
+    if (n == 0) {
+        return 1.0;
+    } else {
+        return n * fact(n - 1);
+    }
+}
+
+// Рекуррентная формула приращения рядной функции
+double cos2_recursive(int n, double x) {
+    return pow(-1, n + 1) * (pow(2, 2 * n - 1) * pow(x, 2 * n)) / fact(2 * n);
+}
+
+// Функция для вычисления рядной функции cos^2(x)
+double cos2_series(double x, double E) {
     double result = 1.0;
     double term = 1.0;
-    for (int i = 1; i <= n; ++i) {
-        term *= (-1) * x * x / (2 * i * (2 * i - 1));
-        result += term;
-    }
+    int n = 1;
+
+    do {
+        term = cos2_recursive(n, x);
+        result -= term;
+        n++;
+    } while (fabs(term) > E);
+
     return result;
 }
 
 int main() {
-    double epsilon, x_start, x_end, delta_x, x_ideal;
-    cout << "Введите точность ε (от 1e-1 до 1e-7): ";
-    while (!(cin >> epsilon) || epsilon < 1e-7 || epsilon > 1e-1) {
-        cout << "Ошибка! Пожалуйста, введите точность ε от 1e-1 до 1e-7: ";
-        cin.clear();
-        cin.ignore(numeric_limits<streamsize>::max(), '\n');
-    }
-    cout << "Введите начало отрезка x_start: ";
-    while (!(cin >> x_start)) {
-        cout << "Ошибка! Пожалуйста, введите числовое значение для начала отрезка x_start: ";
-        cin.clear();
-        cin.ignore(numeric_limits<streamsize>::max(), '\n');
-    }
-    cout << "Введите конец отрезка x_end: ";
-    while (!(cin >> x_end)) {
-        cout << "Ошибка! Пожалуйста, введите числовое значение для конца отрезка x_end: ";
-        cin.clear();
-        cin.ignore(numeric_limits<streamsize>::max(), '\n');
-    }
-    cout << "Введите шаг Δx: ";
-    while (!(cin >> delta_x)) {
-        cout << "Ошибка! Пожалуйста, введите числовое значение для шага Δx: ";
-        cin.clear();
-        cin.ignore(numeric_limits<streamsize>::max(), '\n');
-    }
-    cout << "Введите значение x_ideal: ";
-    while (!(cin >> x_ideal)) {
-        cout << "Ошибка! Пожалуйста, введите числовое значение для x_ideal: ";
-        cin.clear();
-        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    double E, x_start, x_end, dx, x_ideal;
+    string NewStr = "0";
+    int count = 0;
+    // Ввод точности E
+    do {
+        cout << "Введите точность E (от 10^-7 до 10^-1): ";
+        cin >> E;
+        if (cin.fail() || E < 1e-7 || E > 0.1) {
+            cout << "Пожалуйста, введите корректное значение для точности E (от 10^-7 до 10^-1)." << endl;
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        }
+    } while (E < 1e-7 || E > 0.1);
+
+    // Ввод границ промежутка вычисления x_start и x_end
+    do {
+        cout << "Введите границы промежутка вычисления x_start и x_end:";
+        cin >> x_start >> x_end;
+        if (cin.fail() || x_start >= x_end) {
+            cout << "Пожалуйста, введите корректные значения границ промежутка x_start и x_end (x_start должен быть меньше x_end)." << endl;
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        }
+    } while (x_start >= x_end);
+
+    // Ввод шага dx
+    do {
+        cout << "Введите шаг dx:";
+        cin >> dx;
+        if (cin.fail() || dx <= 0) {
+            cout << "Пожалуйста, введите корректное положительное число для шага dx." << endl;
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        }
+    } while (dx <= 0);
+
+    // Ввод значения x_ideal
+    do {
+        cout << "Введите значение x_ideal для точного расчёта:";
+        cin >> x_ideal;
+        if (cin.fail()) {
+            cout << "Пожалуйста, введите числовое значение для x_ideal." << endl;
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+        }
+    } while (cin.fail());
+
+    // Таблица 1
+    cout << left << setw(12) << "| x" << "| f(x)" << "    | F(x)" << "    | delta     |" << endl;
+    cout << setw(45) << setfill('-') << "" << setfill(' ') << endl; // разделитель
+
+    for (double x = x_start; x <= x_end; x += dx) {
+        double f_x = cos2_series(x, E);
+        double F_x = cos(x) * cos(x);
+        double delta = sqrt(fabs(f_x * f_x - F_x * F_x)) - 1.0;
+
+        cout << left << setw(12) << "| " + to_string(x).substr(0, 6) << "| " + to_string(f_x).substr(0, 10) << "| " + to_string(F_x).substr(0, 10) << "| " + to_string(delta).substr(0, 10) << " |" << endl;
     }
 
-    cout << setw(13) << "Таблица 1:" << endl;
-    cout << setw(15) << "x" << " | " << setw(15) << "f(x)" << " | " << setw(15) << "F(x)" << " | " << setw(15) << "δ" << endl;
-    
-    for (double x = x_start; x <= x_end; x += delta_x) {
-        double f_value = f(x, 50); // Вычисляем значение рядной функции
-        double F_value = cos(x) * cos(x); // Вычисляем значение библиотечной функции
-        double delta = sqrt(fabs(f_value * f_value - F_value)); // Вычисляем невязку
-        
-        cout << scientific << setw(15) << setprecision(6) << x << " | " << (fabs(f_value) > 1e-10 ? scientific : fixed) << setw(15) << f_value << " | " 
-             << (fabs(F_value) > 1e-10 ? scientific : fixed) << setw(15) << F_value << " | " << scientific << setw(15) << delta << endl;
-    }
+    // Таблица 2
+    cout << "\nТаблица 2:\n";
+    cout << left << setw(12) << "| E" << "| f(x_i)  " << "| F(x_i)  " << "| delta     |" << endl;
+    cout << setw(45) << setfill('-') << "" << setfill(' ') << endl; // разделитель
 
-    cout << setw(13) << "Таблица 2:" << endl;
-    cout << setw(15) << "ε" << " | " << setw(15) << "f(x_ideal)" << " | " << setw(15) << "F(x_ideal)" << " | " << setw(15) << "δ" << endl;
+    for (double current_E = 0.1; current_E >= 1e-7; current_E *= 0.1) {
+        count++;
+        double f_x_ideal = cos2_series(x_ideal, current_E);
+        double F_x_ideal = cos(x_ideal) * cos(x_ideal);
+        double delta_ideal = sqrt(fabs(f_x_ideal * f_x_ideal - F_x_ideal * F_x_ideal)) - 1.0;
 
-    for (int i = 1; i <= 7; ++i) {
-        double current_epsilon = pow(10, -i);
-        double f_ideal = f(x_ideal, 50); // Вычисляем значение рядной функции для x_ideal
-        double F_ideal = cos(x_ideal) * cos(x_ideal); // Вычисляем значение библиотечной функции для x_ideal
-        double delta_ideal = sqrt(fabs(f_ideal * f_ideal - F_ideal)); // Вычисляем невязку для x_ideal
-        
-        cout << scientific << setw(15) << setprecision(7) << current_epsilon << " | " 
-             << (fabs(f_ideal) > 1e-10 ? scientific : fixed) << setw(15) << f_ideal << " | " 
-             << (fabs(F_ideal) > 1e-10 ? scientific : fixed) << setw(15) << F_ideal << " | " 
-             << scientific << setw(15) << delta_ideal << endl;
+        cout << left << setw(12) << "| " + to_string(current_E).substr(0, 13) + NewStr << "| " + to_string(f_x_ideal).substr(0, 10) << "| " + to_string(F_x_ideal).substr(0, 10) << "| " + to_string(delta_ideal).substr(0, 10) << " |" << endl;
+        if (count == 6)
+            NewStr = "1";
+
     }
 
     return 0;
