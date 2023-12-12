@@ -1,14 +1,15 @@
 #include <iostream>
-#include <cstdlib> // Для функции rand()
-#include <ctime>   // Для функции time()
+#include <cstdlib>
+#include <ctime>
 #include <windows.h>
 #include <iomanip>
+#include <cctype>
+
 using namespace std;
 
-const int MAX_SIZE = 30; // Максимальный размер матрицы
+const int MAX_SIZE = 30;
 
 void fillMatrix(int matrix[][MAX_SIZE], int size) {
-    // Заполнение матрицы случайными числами от 1 до 10
     for (int i = 0; i < size; ++i) {
         for (int j = 0; j < size; ++j) {
             matrix[i][j] = rand() % 20 + 1;
@@ -44,28 +45,37 @@ void printBlueMatrix(int matrix[][MAX_SIZE], int size) {
 }
 
 void transformMatrix(int matrix[][MAX_SIZE], int size) {
-    // Приведение матрицы к нужному виду
     for (int i = 0; i < size; ++i) {
         for (int j = 0; j < size; ++j) {
             if (j < i) {
-                matrix[i][j] = 0; // Обнуляем элементы ниже главной диагонали
+                matrix[i][j] = 0;
             }
         }
     }
 }
 int main() {
     int size;
-    cout << "Введите размерность квадратной матрицы: ";
-    cin >> size;
+    string input;
+    cout << "Введите размерность квадратной матрицы:";
+    cin >> input;
 
-    if (size <= 0 || size > MAX_SIZE) {
-        cout << "Размер должен быть положительным и не превышать " << MAX_SIZE << "." << endl;
+    bool isNumber = true;
+    for (char c : input) {
+        if (!isdigit(c)) {
+            isNumber = false;
+            break;
+        }
+    }
+
+    if (!isNumber || (isNumber && (stoi(input) <= 0 || stoi(input) > MAX_SIZE))) {
+        cout << "Размер должен быть положительным числом и не превышать " << MAX_SIZE << ", а также не быть числом" << "." << endl;
         return 1;
     }
 
+    size = stoi(input);
+
     int matrix[MAX_SIZE][MAX_SIZE];
 
-    // Инициализация генератора случайных чисел
     srand(static_cast<unsigned int>(time(0)));
 
     fillMatrix(matrix, size);
@@ -77,4 +87,4 @@ int main() {
     cout << "Преобразованная матрица:" << endl;
     printBlueMatrix(matrix, size);
     return 0;
-    }
+}
