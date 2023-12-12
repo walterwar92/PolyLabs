@@ -5,32 +5,39 @@
 
 using namespace std;
 
-// Функция, которая переворачивает строку
-string reverseString(const string& str) {
-    return string(str.rbegin(), str.rend());
+bool isTxtFile(const string& filename) {
+    size_t dotPos = filename.find_last_of('.');
+    if (dotPos == string::npos) {
+        return false;
+    }
+    string extension = filename.substr(dotPos + 1);
+    return (extension == "txt");
 }
 
 int main() {
-    ifstream inputFile("input.txt"); // Имя файла для чтения
+    string filePath;
+    cout << "Введите путь к файлу: ";
+    cin >> filePath;
 
-    if (!inputFile.is_open()) {
-        cout << "Unable to open file!" << endl;
+    if (!isTxtFile(filePath)) {
+        cout << "Файл не является текстовым файлом (.txt).\n";
         return 1;
     }
 
-    string word;
-    locale loc("ru_RU.UTF-8"); // Установка локали для корректной обработки русских букв
+    wifstream inputFile(filePath);
+    inputFile.imbue(locale(""));
 
+    if (!inputFile.is_open()) {
+        cout << "Не удалось открыть файл.\n";
+        return 1;
+    }
+
+    wstring word;
     while (inputFile >> word) {
-        // Если текущее слово содержит буквы, обрабатываем их
-        for (char& c : word) {
-            if (isalpha(c, loc)) {
-                c = tolower(c, loc); // Приводим все буквы к нижнему регистру для корректного переворота
-            }
-        }
-        cout << reverseString(word) << " ";
+        wcout << wstring(word.rbegin(), word.rend()) << L" ";
     }
 
     inputFile.close();
+
     return 0;
 }
