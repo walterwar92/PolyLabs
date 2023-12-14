@@ -57,12 +57,13 @@ int main() {
     do {
         cout << "Введите границы промежутка вычисления x_start и x_end:";
         cin >> x_start >> x_end;
-        if (cin.fail() || x_start >= x_end) {
-            cout << "Пожалуйста, введите корректные значения границ промежутка x_start и x_end (x_start должен быть меньше x_end)." << endl;
+        if (cin.fail() || x_start >= x_end || x_start <= -21 || x_end >= 21) {
+            cout << "Пожалуйста, введите корректные значения границ промежутка x_start и x_end (-20 до 20, где x_start < x_end):" << endl;
             cin.clear();
             cin.ignore(numeric_limits<streamsize>::max(), '\n');
         }
-    } while (x_start >= x_end);
+    } while (x_start >= x_end || x_start <= -21 || x_end >= 21);
+
 
     do {
         cout << "Введите шаг dx:";
@@ -90,19 +91,19 @@ int main() {
     for (double x = x_start; x <= x_end; x += dx) {
         double f_x = cos2_series(x, E);
         double F_x = cos(x) * cos(x);
-        double delta = sqrt(fabs(f_x * f_x - F_x * F_x)) - 1.0;
+        double delta = sqrt(fabs(f_x * f_x - F_x * F_x));
 
         cout << left << setw(12) << "| " + to_string(x).substr(0, 6) << "| " + to_string(f_x).substr(0, 10) << "| " + to_string(F_x).substr(0, 10) << "| " + to_string(delta).substr(0, 10) << " |" << endl;
     }
 
-    cout << left << setw(12) << "| E" << "| f(x_i)  " << "| F(x_i)  " << "| delta     |" << endl;
+    cout << left << setw(12) << "| E" << "| f(x_i)  " << "| F(x_i)  " << "| delta    |" << endl;
     cout << setw(45) << setfill('-') << "" << setfill(' ') << endl;
 
     for (double current_E = 0.1; current_E >= 1e-7; current_E *= 0.1) {
         count++;
         double f_x_ideal = cos2_series(x_ideal, current_E);
         double F_x_ideal = cos(x_ideal) * cos(x_ideal);
-        double delta_ideal = sqrt(fabs(f_x_ideal * f_x_ideal - F_x_ideal * F_x_ideal)) - 1.0;
+        double delta_ideal = sqrt(fabs(f_x_ideal * f_x_ideal - F_x_ideal * F_x_ideal));
 
         cout << left << setw(12) << "| " + to_string(current_E).substr(0, 13) + NewStr << "| " + to_string(f_x_ideal).substr(0, 10) << "| " + to_string(F_x_ideal).substr(0, 10) << "| " + to_string(delta_ideal).substr(0, 10) << " |" << endl;
         if (count == 6)
