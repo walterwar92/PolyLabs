@@ -1,0 +1,15 @@
+cmake_minimum_required(VERSION 3.28)
+project(untitled15)
+set(CMAKE_CXX_STANDARD 17)
+
+add_executable(untitled15 main.cpp)
+# Убедитесь, что путь к MathLibrary.dll корректен
+set(MathLibrary_DIR "C:/Users/Roman/Desktop")
+
+find_library(MathLibrary_LIB MathLibrary PATHS ${MathLibrary_DIR} NO_DEFAULT_PATH)
+
+if (MathLibrary_LIB)
+    target_link_libraries(untitled15 ${MathLibrary_LIB})
+else()
+    message(FATAL_ERROR "MathLibrary not found")
+endif()
