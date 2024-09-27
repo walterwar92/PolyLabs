@@ -25,8 +25,8 @@ public:
 
     // Вывод информации о полосе
     void printInfo() const {
-        cout << "Runway ID: " << id << " | "
-            << (isOccupied ? "Occupied" : "Free") << endl;
+        cout << "Идентификатор взлетной полосы: " << id << " | "
+            << (isOccupied ? "Занята" : "Свободна") << endl;
     }
 };
 
@@ -62,11 +62,11 @@ public:
     // Метод для добавления новой взлетной полосы с проверкой на уникальность ID
     void addRunway(int id, bool isOccupied) {
         if (runwayExists(id)) {
-            cout << "Error: Runway with ID " << id << " already exists!\n";
+            cout << "Ошибка: Взлетная полоса с идентификатором " << id << " уже существует!\n";
         }
         else {
             runways.emplace_back(id, isOccupied);
-            cout << "Runway added successfully.\n";
+            cout << "Взлетная полоса добавлена успешно.\n";
         }
     }
 
@@ -82,11 +82,11 @@ public:
         for (auto& runway : runways) {
             if (runway.getId() == id) {
                 runway.setOccupiedStatus();
-                cout << "Runway " << id << " status updated.\n";
+                cout << "Статус взлетной полосы " << id << " обновлён.\n";
                 return;
             }
         }
-        cout << "Runway " << id << " not found.\n";
+        cout << "Взлетная полоса " << id << " не найдена.\n";
     }
 
     // Метод для безопасного ввода чисел
@@ -99,7 +99,7 @@ public:
             if (cin.fail()) {
                 cin.clear(); // Сбросить флаг ошибки
                 cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Очистить буфер
-                cout << "Invalid input. Please enter a valid number.\n";
+                cout << "Неверный ввод. Пожалуйста, введите корректное число.\n";
             }
             else {
                 cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Очистить оставшийся ввод
@@ -128,24 +128,24 @@ static void menu() {
     while (OnDisplay) {
         clearConsole(); // Очистка консоли перед выводом меню
 
-        cout << "===== Airport Management System =====\n";
-        cout << "1. Add a new runway\n";
-        cout << "2. Update runway status\n";
-        cout << "3. View all runways\n";
-        cout << "0. Exit\n";
-        cout << "=====================================\n";
+        cout << "===== Система управления аэропортом =====\n";
+        cout << "1. Добавить новую взлетную полосу\n";
+        cout << "2. Обновить статус взлетной полосы\n";
+        cout << "3. Просмотреть все взлетные полосы\n";
+        cout << "0. Выход\n";
+        cout << "=========================================\n";
 
-        int choice = Airport::inputInteger("Select an option: ");
+        int choice = Airport::inputInteger("Выберите опцию: ");
 
         switch (choice) {
         case 1: {
-            int id = Airport::inputInteger("Enter the runway ID: ");
-            int status = Airport::inputInteger("Enter the status (0 for Free, 1 for Occupied): ");
+            int id = Airport::inputInteger("Введите идентификатор взлетной полосы: ");
+            int status = Airport::inputInteger("Введите статус (0 для Свободна, 1 для Занята): ");
             airport.addRunway(id, status);
             break;
         }
         case 2: {
-            int id = Airport::inputInteger("Enter the runway ID to update: ");
+            int id = Airport::inputInteger("Введите идентификатор взлетной полосы для обновления: ");
             airport.setRunwayStatus(id);
             break;
         }
@@ -156,10 +156,10 @@ static void menu() {
             OnDisplay = false;
             break;
         default:
-            cout << "Invalid option! Please try again.\n";
+            cout << "Неверная опция! Пожалуйста, попробуйте снова.\n";
         }
 
-        cout << "\nPress Enter to continue...";
+        cout << "\nНажмите Enter, чтобы продолжить...";
         cin.get();
     }
 }
