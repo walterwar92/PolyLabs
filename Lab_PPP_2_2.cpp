@@ -6,29 +6,67 @@
 
 using namespace std;
 
-// Перечисление 
 enum RunwayStatus {
     FREE = 0,
     OCCUPIED = 1
 };
 
-// Структура для хранения информации о продаже билета
 struct TicketSale {
     string passportNumber;
     double price;
 
     TicketSale(const string& passport, double p) : passportNumber(passport), price(p) {}
+
+    ~TicketSale() {
+        cout << "Деструктор для продажи билета: " << passportNumber << endl;
+    }
 };
 
-// Структура для хранения тарифов
 struct Fare {
     string name;
     double price;
 
     Fare(const string& fareName, double farePrice) : name(fareName), price(farePrice) {}
+
+    ~Fare() {
+        cout << "Деструктор для тарифа: " << name << endl;
+    }
 };
 
-// Взлетная полоса
+static bool isValidNumber(const string& str) {
+    if (str.empty()) return false;
+    for (char c : str) {
+        if (!isdigit(c)) return false;
+    }
+    return true;
+}
+
+template <typename T>
+T getValidInput(const string& prompt) {
+    string input;
+    while (true) {
+        cout << prompt;
+        cin >> input;
+
+        if (isValidNumber(input)) {
+            try {
+                if constexpr (is_same<T, int>::value) {
+                    return stoi(input);
+                }
+                else if constexpr (is_same<T, double>::value) {
+                    return stod(input);
+                }
+            }
+            catch (const invalid_argument& e) {
+                cout << "Неверный ввод. Пожалуйста, введите только число." << endl;
+            }
+        }
+        else {
+            cout << "Неверный ввод. Пожалуйста, введите только число." << endl;
+        }
+    }
+}
+
 class Runway {
 private:
     int id;
@@ -37,13 +75,16 @@ private:
 public:
     Runway(int id, RunwayStatus status) : id(id), status(status) {}
 
+    ~Runway() {
+        cout << "Деструктор для взлетной полосы с ID: " << id << endl;
+    }
+
     int getId() const { return id; }
 
     RunwayStatus getStatus() const { return status; }
 
     void setStatus(RunwayStatus newStatus) { status = newStatus; }
 
-    // Вывод информации о полосе
     void printInfo() const {
         cout << "Идентификатор взлетной полосы: " << id << " | "
             << (status == OCCUPIED ? "Занята" : "Свободна") << endl;
@@ -52,20 +93,22 @@ public:
 
 class AirportCashier {
 private:
-    vector<Fare> fares; // Список тарифов
+    vector<Fare> fares;
     double totalSales;
     vector<TicketSale> sales;
 
 public:
     AirportCashier() : totalSales(0.0) {}
 
-    // Метод для добавления нового тарифа
+    ~AirportCashier() {
+        cout << "Деструктор для кассира аэропорта\n";
+    }
+
     void addFare(const string& fareName, double farePrice) {
         fares.emplace_back(fareName, farePrice);
         cout << "Тариф добавлен успешно: " << fareName << " по цене " << farePrice << endl;
     }
 
-    // Метод для вывода тарифов
     void printFares() const {
         cout << "Список тарифов:\n";
         for (size_t i = 0; i < fares.size(); ++i) {
@@ -73,7 +116,6 @@ public:
         }
     }
 
-    // Метод для регистрации покупки билета
     void registerSale(const string& passportNumber, double price) {
         totalSales += price;
         sales.emplace_back(passportNumber, price);
@@ -82,35 +124,34 @@ public:
 
     double getTotalSales() const { return totalSales; }
 
-    // Метод для получения цены тарифа по индексу
     double getFarePrice(int index) const {
         if (index >= 0 && index < fares.size()) {
             return fares[index].price;
         }
-        return 0.0; // Возвращаем 0, если индекс невалиден
+        return 0.0;
     }
 };
 
-// Класс Singleton для управления аэропортом
 class Airport {
 private:
     vector<Runway> runways;
     AirportCashier cashier;
 
-    // Приватный конструктор для Singleton
     Airport() {}
 
     Airport(const Airport&) = delete;
     Airport& operator=(const Airport&) = delete;
 
 public:
-    // Метод для получения единственного экземпляра класса (Singleton)
     static Airport& getInstance() {
         static Airport instance;
         return instance;
     }
 
-    // Метод для проверки, существует ли полоса с данным ID
+    ~Airport() {
+        cout << "Деструктор для аэропорта\n";
+    }
+
     bool runwayExists(int id) const {
         for (const auto& runway : runways) {
             if (runway.getId() == id) {
@@ -147,63 +188,19 @@ public:
         cout << "Взлетная полоса " << id << " не найдена.\n";
     }
 
-    static int inputInteger(const string& prompt) {
-        int num;
-        while (true) {
-            cout << prompt;
-            cin >> num;
-
-            if (cin.fail() || num < 0) { // Проверка на ввод отрицательных чисел
-                cin.clear();
-                cin.ignore(numeric_limits<streamsize>::max(), '\n');
-                cout << "Неверный ввод. Пожалуйста, введите неотрицательное число.\n";
-            }
-            else {
-                cin.ignore(numeric_limits<streamsize>::max(), '\n');
-                return num;
-            }
-        }
-    }
-
-    static double inputDouble(const string& prompt) {
-        double num;
-        while (true) {
-            cout << prompt;
-            cin >> num;
-
-            if (cin.fail() || num < 0.0) { // Проверка на ввод отрицательных чисел
-                cin.clear();
-                cin.ignore(numeric_limits<streamsize>::max(), '\n');
-                cout << "Неверный ввод. Пожалуйста, введите неотрицательное число.\n";
-            }
-            else {
-                cin.ignore(numeric_limits<streamsize>::max(), '\n');
-                return num;
-            }
-        }
-    }
-
-    static string inputString(const string& prompt) {
-        string input;
-        cout << prompt;
-        getline(cin, input);
-        return input;
-    }
-
     AirportCashier& getCashier() {
         return cashier;
     }
 };
 
-void clearConsole() {
+static void clearConsole() {
 #ifdef _WIN32
-    system("cls"); // Для Windows
+    system("cls");
 #else
-    system("clear"); // Для Linux/macOS
+    system("clear");
 #endif
 }
 
-// Главное меню
 static void menu() {
     Airport& airport = Airport::getInstance();
     bool OnDisplay = true;
@@ -222,18 +219,19 @@ static void menu() {
         cout << "0. Выход\n";
         cout << "=========================================\n";
 
-        int choice = Airport::inputInteger("Выберите опцию: ");
+        int choice = getValidInput<int>("Выберите опцию: ");
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
         switch (choice) {
         case 1: {
-            int id = Airport::inputInteger("Введите идентификатор взлетной полосы: ");
-            int status = Airport::inputInteger("Введите статус (0 для Свободна, 1 для Занята): ");
+            int id = getValidInput<int>("Введите идентификатор взлетной полосы: ");
+            int status = getValidInput<int>("Введите статус (0 для Свободна, 1 для Занята): ");
             airport.addRunway(id, static_cast<RunwayStatus>(status));
             break;
         }
         case 2: {
-            int id = Airport::inputInteger("Введите идентификатор взлетной полосы для обновления: ");
-            int status = Airport::inputInteger("Введите новый статус (0 для Свободна, 1 для Занята): ");
+            int id = getValidInput<int>("Введите идентификатор взлетной полосы для обновления: ");
+            int status = getValidInput<int>("Введите новый статус (0 для Свободна, 1 для Занята): ");
             airport.setRunwayStatus(id, static_cast<RunwayStatus>(status));
             break;
         }
@@ -241,8 +239,10 @@ static void menu() {
             airport.printRunways();
             break;
         case 4: {
-            string fareName = Airport::inputString("Введите название тарифа: ");
-            double farePrice = Airport::inputDouble("Введите цену тарифа: "); // Обновлено на inputDouble
+            string fareName;
+            cout << "Введите название тарифа: ";
+            getline(cin, fareName);
+            double farePrice = getValidInput<double>("Введите цену тарифа: ");
             airport.getCashier().addFare(fareName, farePrice);
             break;
         }
@@ -250,9 +250,11 @@ static void menu() {
             airport.getCashier().printFares();
             break;
         case 6: {
-            string passport = Airport::inputString("Введите номер паспорта (только цифры): ");
+            string passport;
+            cout << "Введите номер паспорта (только цифры): ";
+            getline(cin, passport);
             airport.getCashier().printFares();
-            int fareIndex = Airport::inputInteger("Выберите тариф (введите номер): ") - 1;
+            int fareIndex = getValidInput<int>("Выберите тариф (введите номер): ") - 1;
             double farePrice = airport.getCashier().getFarePrice(fareIndex);
             airport.getCashier().registerSale(passport, farePrice);
             break;
@@ -268,12 +270,12 @@ static void menu() {
         }
 
         cout << "\nНажмите Enter, чтобы продолжить...";
-        cin.get();
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
     }
 }
 
 int main() {
-    setlocale(LC_ALL, "Russian");
+    setlocale(LC_ALL, "");
     menu();
     return 0;
 }
