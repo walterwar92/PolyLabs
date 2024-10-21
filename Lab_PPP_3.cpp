@@ -2,6 +2,7 @@
 #include <vector>
 #include <limits>
 #include <string>
+#include <memory>
 
 using namespace std;
 
@@ -12,6 +13,8 @@ public:
     // Метод для получения стоимости тарифа
     virtual double getCost() const = 0;
     virtual string getDestination() const = 0;
+    // Новый метод: Исходная стоимость без скидок
+    virtual double getOriginalCost() const = 0;
 };
 
 // Класс для тарифа без скидки
@@ -28,6 +31,10 @@ public:
 
     string getDestination() const override {
         return destination;
+    }
+
+    double getOriginalCost() const override {
+        return cost; // Исходная стоимость такая же, так как скидок нет
     }
 };
 
@@ -47,6 +54,32 @@ public:
     string getDestination() const override {
         return destination;
     }
+
+    double getOriginalCost() const override {
+        return cost; // Возвращаем исходную стоимость без скидки
+    }
+};
+
+// Новый класс для тарифа с процентной скидкой
+class PercentageDiscountTariff : public TariffStrategy {
+private:
+    string destination;
+    double cost;
+    double percentage;
+public:
+    PercentageDiscountTariff(const string& dest, double c, double p) : destination(dest), cost(c), percentage(p) {}
+
+    double getCost() const override {
+        return cost * (1 - percentage / 100);
+    }
+
+    string getDestination() const override {
+        return destination;
+    }
+
+    double getOriginalCost() const override {
+        return cost; // Возвращаем исходную стоимость без скидки
+    }
 };
 
 // Класс Аэропорт, который управляет тарифами
@@ -54,7 +87,6 @@ class Airport {
 private:
     vector<shared_ptr<TariffStrategy>> tariffs;
 public:
-    // Проверка на существующее направление
     bool doesTariffExist(const string& destination) const {
         for (const auto& tariff : tariffs) {
             if (tariff->getDestination() == destination) {
@@ -63,12 +95,11 @@ public:
         }
         return false;
     }
-    // Метод для добавления нового тарифа
+
     void addTariff(shared_ptr<TariffStrategy> tariff) {
         tariffs.push_back(tariff);
     }
 
-    // Метод для поиска направления с максимальной стоимостью
     shared_ptr<TariffStrategy> getMaxCostTariff() const {
         if (tariffs.empty()) {
             throw runtime_error("Нет доступных тарифов");
@@ -83,7 +114,6 @@ public:
         return maxTariff;
     }
 
-    // Новый метод: Удаление тарифа по названию направления
     void removeTariffByDestination(const string& destination) {
         auto it = remove_if(tariffs.begin(), tariffs.end(),
             [&destination](const shared_ptr<TariffStrategy>& tariff) {
@@ -99,7 +129,6 @@ public:
         }
     }
 
-    // Новый метод: Поиск тарифа по названию направления
     shared_ptr<TariffStrategy> findTariffByDestination(const string& destination) const {
         for (const auto& tariff : tariffs) {
             if (tariff->getDestination() == destination) {
@@ -109,7 +138,6 @@ public:
         throw runtime_error("Тариф на указанное направление не найден.");
     }
 
-    // Новый метод: Вывод всех тарифов
     void printAllTariffs() const {
         if (tariffs.empty()) {
             cout << "Список тарифов пуст.\n";
@@ -119,7 +147,8 @@ public:
         cout << "=== Список всех тарифов ===\n";
         for (const auto& tariff : tariffs) {
             cout << "Направление: " << tariff->getDestination()
-                << " | Стоимость: " << tariff->getCost() << "\n";
+                << " | Стоимость: " << tariff->getCost()
+                << " | Исходная стоимость: " << tariff->getOriginalCost() << "\n";
         }
     }
 };
@@ -163,10 +192,11 @@ int main() {
         cout << "=== Меню аэропорта ===\n";
         cout << "1. Добавить новый тариф без скидки\n";
         cout << "2. Добавить новый тариф с фиксированной скидкой\n";
-        cout << "3. Показать направление с максимальной стоимостью\n";
-        cout << "4. Удалить тариф по направлению\n";
-        cout << "5. Найти тариф по направлению\n";
-        cout << "6. Показать все тарифы\n";
+        cout << "3. Добавить новый тариф с процентной скидкой\n";
+        cout << "4. Показать направление с максимальной стоимостью\n";
+        cout << "5. Удалить тариф по направлению\n";
+        cout << "6. Найти тариф по направлению\n";
+        cout << "7. Показать все тарифы\n";
         cout << "0. Выход\n";
         cout << "Выберите действие: ";
         cin >> choice;
@@ -186,7 +216,6 @@ int main() {
             cin.ignore();
             getline(cin, destination);
 
-            // Проверка на существующее направление
             if (airport.doesTariffExist(destination)) {
                 cout << "Ошибка: Тариф на данное направление уже существует. Введите другое название.\n";
                 break;
@@ -204,7 +233,6 @@ int main() {
             cin.ignore();
             getline(cin, destination);
 
-            // Проверка на существующее направление
             if (airport.doesTariffExist(destination)) {
                 cout << "Ошибка: Тариф на данное направление уже существует. Введите другое название.\n";
                 break;
@@ -221,6 +249,28 @@ int main() {
             break;
         }
         case 3: {
+            clearConsole();
+            string destination;
+            cout << "Введите название направления: ";
+            cin.ignore();
+            getline(cin, destination);
+
+            if (airport.doesTariffExist(destination)) {
+                cout << "Ошибка: Тариф на данное направление уже существует. Введите другое название.\n";
+                break;
+            }
+
+            double cost = inputNumber("Введите стоимость: ");
+            double percentage = inputNumber("Введите процент скидки: ");
+            if (percentage < 0 || percentage > 100) {
+                cout << "Ошибка: процент скидки должен быть от 0 до 100.\n";
+                break;
+            }
+            airport.addTariff(make_shared<PercentageDiscountTariff>(destination, cost, percentage));
+            cout << "Тариф с процентной скидкой добавлен успешно.\n";
+            break;
+        }
+        case 4: {
             try {
                 shared_ptr<TariffStrategy> maxTariff = airport.getMaxCostTariff();
                 cout << "Направление с максимальной стоимостью: " << maxTariff->getDestination()
@@ -231,7 +281,7 @@ int main() {
             }
             break;
         }
-        case 4: {
+        case 5: {
             clearConsole();
             string destination;
             cout << "Введите название направления для удаления: ";
@@ -240,7 +290,7 @@ int main() {
             airport.removeTariffByDestination(destination);
             break;
         }
-        case 5: {
+        case 6: {
             clearConsole();
             string destination;
             cout << "Введите название направления для поиска: ";
@@ -256,7 +306,7 @@ int main() {
             }
             break;
         }
-        case 6: {
+        case 7: {
             airport.printAllTariffs();
             break;
         }
