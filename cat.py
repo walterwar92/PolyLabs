@@ -37,6 +37,7 @@ def get_script():
 
 @app.route('/run', methods=['POST'])
 def run_script():
+    # Принимаем параметры: имя скрипта и шаг
     script_name = request.form.get('script')
     step = request.form.get('step')  # шаг интегрирования, если требуется
     if not script_name:
@@ -57,11 +58,19 @@ def run_script():
         
         if result.returncode != 0:
             return jsonify({"error": "Script execution failed", "details": result.stderr}), 500
+
+        # Читаем содержимое output.csv, созданного Scilab-скриптом
+        output_file = os.path.join(SCRIPTS_DIR, "output.csv")
+        if os.path.exists(output_file):
+            with open(output_file, "r", encoding="utf-8") as f:
+                csv_data = f.read()
+        else:
+            csv_data = ""
         
-        return jsonify({"output": result.stdout})
+        # Возвращаем CSV данные в JSON
+        return jsonify({"output": csv_data})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -72,6 +81,6 @@ def login():
     else:
         return jsonify({"status": "error", "message": "Invalid credentials"}), 401
 
-
-# Запуск приложения на всех интерфейсах, порт 5000
-app.run(host='0.0.0.0', port=5000, debug=True)
+if __name__ == '__main__':
+    # Запуск приложения на всех интерфейсах, порт 5000
+    app.run(host='0.0.0.0', port=5000, debug=True)
