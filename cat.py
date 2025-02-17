@@ -52,17 +52,29 @@ def run_script():
         abort(404, description="Script file not found")
 
     try:
+        env = os.environ.copy()
+        if step:
+            env["STEP"] = step
+
+        # Логируем начало выполнения скрипта
+        app.logger.info(f"Running script: {file_path} with step: {step}")
+
         # Запуск Scilab
         result = subprocess.run(["scilab", "-nwni", "-nb", "-f", file_path],
                                 capture_output=True, text=True, env=env, cwd=SCRIPTS_DIR)
         
         if result.returncode != 0:
+            app.logger.error(f"Script execution failed: {result.stderr}")
             return jsonify({"error": "Script execution failed", "details": result.stderr}), 500
-        
+
+        # Логируем успешное выполнение
+        app.logger.info("Script executed successfully.")
+
         # Построение графика из CSV
         if os.path.exists(OUTPUT_CSV):
             df = pd.read_csv(OUTPUT_CSV, header=None)
             df.columns = ["t", "y"]
+
             plt.figure()
             plt.plot(df["t"], df["y"], "b-")
             plt.xlabel("t")
@@ -71,13 +83,10 @@ def run_script():
             plt.grid(True)
             plt.savefig(OUTPUT_PNG)
 
-        # Логирование путей к файлам перед отправкой
-        print(f"CSV Path: {OUTPUT_CSV}")
-        print(f"PNG Path: {OUTPUT_PNG}")
-        
         return jsonify({"status": "success", "csv": OUTPUT_CSV, "image": OUTPUT_PNG})
     
     except Exception as e:
+        app.logger.error(f"Error while running script: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
         
