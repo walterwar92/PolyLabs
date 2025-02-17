@@ -79,7 +79,15 @@ def run_script():
     
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+        
+@app.route("/download", methods=["GET"])
+def download_file():
+    file_path = request.args.get("file")
+    if not file_path or not os.path.exists(file_path):
+        return "Ошибка: файл не найден", 404
 
+    return send_file(file_path, as_attachment=True)
+    
 @app.route('/login', methods=['POST'])
 def login():
     username = request.form.get('username')
