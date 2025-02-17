@@ -37,9 +37,8 @@ def get_script():
 
 @app.route('/run', methods=['POST'])
 def run_script():
-    # Принимаем только имя скрипта и шаг (остальные параметры убраны)
     script_name = request.form.get('script')
-    step = request.form.get('step')  # шаг интегрирования
+    step = request.form.get('step')  # шаг интегрирования, если требуется
     if not script_name:
         abort(400, description="Missing 'script' parameter")
     
@@ -48,15 +47,13 @@ def run_script():
         abort(404, description="Script file not found")
     
     try:
-        # Передаем шаг через переменную окружения (если необходимо)
         env = os.environ.copy()
         if step is not None:
             env["STEP"] = step
 
-        # Запуск Scilab-скрипта с использованием необходимых флагов:
-        # -nwni: без оконного интерфейса, -nb: без баннера, -f: выполнить скрипт
+        # Запускаем Scilab с указанием рабочей директории, где будет создан output.csv
         result = subprocess.run(["scilab", "-nwni", "-nb", "-f", file_path],
-                                capture_output=True, text=True, env=env)
+                                capture_output=True, text=True, env=env, cwd=SCRIPTS_DIR)
         
         if result.returncode != 0:
             return jsonify({"error": "Script execution failed", "details": result.stderr}), 500
@@ -64,6 +61,7 @@ def run_script():
         return jsonify({"output": result.stdout})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
 
 @app.route('/login', methods=['POST'])
 def login():
