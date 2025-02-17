@@ -1,13 +1,14 @@
 from flask import Flask, jsonify, request, abort
 import os
 import subprocess
+import base64
 from flask_cors import CORS
 
 app = Flask(__name__)
 CORS(app)  # Разрешаем CORS для всех маршрутов
 
 # Путь к директории со скриптами Scilab
-SCRIPTS_DIR = "/home/scilab_scripts"  # Замените на нужный путь
+SCRIPTS_DIR = "/home/scilab_scripts"  # Укажите корректный путь
 
 @app.route('/get_scripts', methods=['GET'])
 def get_scripts():
@@ -52,23 +53,30 @@ def run_script():
         if step is not None:
             env["STEP"] = step
 
-        # Запускаем Scilab с указанием рабочей директории, где будет создан output.csv
+        # Запускаем Scilab с указанием рабочей директории, где будут созданы файлы output.csv и output.png
         result = subprocess.run(["scilab", "-nwni", "-nb", "-f", file_path],
                                 capture_output=True, text=True, env=env, cwd=SCRIPTS_DIR)
         
         if result.returncode != 0:
             return jsonify({"error": "Script execution failed", "details": result.stderr}), 500
-
-        # Читаем содержимое output.csv, созданного Scilab-скриптом
-        output_file = os.path.join(SCRIPTS_DIR, "output.csv")
-        if os.path.exists(output_file):
-            with open(output_file, "r", encoding="utf-8") as f:
-                csv_data = f.read()
-        else:
-            csv_data = ""
         
-        # Возвращаем CSV данные в JSON
-        return jsonify({"output": csv_data})
+        # Чтение CSV файла
+        csv_file = os.path.join(SCRIPTS_DIR, "output.csv")
+        csv_data = ""
+        if os.path.exists(csv_file):
+            with open(csv_file, "r", encoding="utf-8") as f:
+                csv_data = f.read()
+        
+        # Чтение PNG файла и кодирование в Base64
+        png_file = os.path.join(SCRIPTS_DIR, "output.png")
+        png_data = ""
+        if os.path.exists(png_file):
+            with open(png_file, "rb") as f:
+                png_bytes = f.read()
+                png_data = base64.b64encode(png_bytes).decode("utf-8")
+        
+        # Возвращаем CSV и PNG данные в JSON
+        return jsonify({"csv": csv_data, "png": png_data})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -82,5 +90,4 @@ def login():
         return jsonify({"status": "error", "message": "Invalid credentials"}), 401
 
 if __name__ == '__main__':
-    # Запуск приложения на всех интерфейсах, порт 5000
     app.run(host='0.0.0.0', port=5000, debug=True)
