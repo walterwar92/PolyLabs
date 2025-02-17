@@ -6,16 +6,12 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)  # Разрешаем CORS для всех маршрутов
 
-# Задайте путь к директории, где находятся ваши Scilab скрипты
-SCRIPTS_DIR = "/home/ubuntu/scilab_scripts"  # Замените на ваш путь
+# Путь к директории со скриптами Scilab
+SCRIPTS_DIR = "/home/scilab_scripts"  # Замените на нужный путь
 
 @app.route('/get_scripts', methods=['GET'])
 def get_scripts():
-    """
-    Возвращает список всех файлов с расширениями .sci или .sce в директории SCRIPTS_DIR.
-    """
     try:
-        # Получаем список файлов в директории, фильтруем по расширению
         scripts = [f for f in os.listdir(SCRIPTS_DIR)
                    if os.path.isfile(os.path.join(SCRIPTS_DIR, f)) and f.lower().endswith(('.sci', '.sce'))]
         return jsonify(scripts)
@@ -24,10 +20,6 @@ def get_scripts():
 
 @app.route('/script', methods=['GET'])
 def get_script():
-    """
-    Возвращает содержимое выбранного скрипта.
-    Ожидает параметр запроса 'filename'
-    """
     filename = request.args.get('filename')
     if not filename:
         abort(400, description="Missing 'filename' parameter")
@@ -45,13 +37,9 @@ def get_script():
 
 @app.route('/run', methods=['POST'])
 def run_script():
-    """
-    Принимает POST-запрос с параметрами 'script' (имя файла) и 'function' (введённая функция или параметры).
-    Запускает Scilab-скрипт и возвращает результат.
-    """
+    # Принимаем только имя скрипта и шаг (остальные параметры убраны)
     script_name = request.form.get('script')
-    function_input = request.form.get('function')  # Может быть пустым
-    
+    step = request.form.get('step')  # шаг интегрирования
     if not script_name:
         abort(400, description="Missing 'script' parameter")
     
@@ -60,12 +48,14 @@ def run_script():
         abort(404, description="Script file not found")
     
     try:
-        # Передаём введённую функцию в переменную окружения, чтобы скрипт мог её использовать
+        # Передаем шаг через переменную окружения (если необходимо)
         env = os.environ.copy()
-        env["FUNCTION_INPUT"] = function_input if function_input is not None else ""
-        
-        # Запускаем Scilab в безграфическом режиме с указанным скриптом
-        result = subprocess.run(["scilab", "-nb", "-f", file_path],
+        if step is not None:
+            env["STEP"] = step
+
+        # Запуск Scilab-скрипта с использованием необходимых флагов:
+        # -nwni: без оконного интерфейса, -nb: без баннера, -f: выполнить скрипт
+        result = subprocess.run(["scilab", "-nwni", "-nb", "-f", file_path],
                                 capture_output=True, text=True, env=env)
         
         if result.returncode != 0:
@@ -77,10 +67,6 @@ def run_script():
 
 @app.route('/login', methods=['POST'])
 def login():
-    """
-    Простой пример проверки логина.
-    Ожидает параметры 'username' и 'password'.
-    """
     username = request.form.get('username')
     password = request.form.get('password')
     if username == "admin" and password == "admin":
@@ -88,6 +74,6 @@ def login():
     else:
         return jsonify({"status": "error", "message": "Invalid credentials"}), 401
 
-if __name__ == '__main__':
-    # Запуск приложения на всех интерфейсах, порт 5000.
-    app.run(host='0.0.0.0', port=5000, debug=True)
+
+# Запуск приложения на всех интерфейсах, порт 5000
+app.run(host='0.0.0.0', port=5000, debug=True)
