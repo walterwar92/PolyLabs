@@ -2,16 +2,18 @@ import os
 import subprocess
 import pandas as pd
 import matplotlib.pyplot as plt
-from flask import Flask, jsonify, request, abort
+from flask import Flask, jsonify, request, abort, send_file
 from flask_cors import CORS
-from flask import send_file
 
 app = Flask(__name__)
 CORS(app)
 
 SCRIPTS_DIR = "/home/scilab_scripts"
 OUTPUT_CSV = os.path.join(SCRIPTS_DIR, "output.csv")
+# Для графиков зададим отдельные имена
 OUTPUT_PNG = os.path.join(SCRIPTS_DIR, "output.png")
+OUTPUT_PNG1 = os.path.join(SCRIPTS_DIR, "output1.png")
+OUTPUT_PNG2 = os.path.join(SCRIPTS_DIR, "output2.png")
 
 @app.route('/get_scripts', methods=['GET'])
 def get_scripts():
@@ -56,7 +58,6 @@ def run_script():
         if step:
             env["STEP"] = step
 
-        # Логируем начало выполнения скрипта
         app.logger.info(f"Running script: {file_path} with step: {step}")
 
         # Запуск Scilab
@@ -67,29 +68,59 @@ def run_script():
             app.logger.error(f"Script execution failed: {result.stderr}")
             return jsonify({"error": "Script execution failed", "details": result.stderr}), 500
 
-        # Логируем успешное выполнение
         app.logger.info("Script executed successfully.")
 
-        # Построение графика из CSV
+        # Построение графиков из CSV
+        output_png1 = None
+        output_png2 = None
         if os.path.exists(OUTPUT_CSV):
             df = pd.read_csv(OUTPUT_CSV, header=None)
-            df.columns = ["t", "y"]
+            # Если запускается лабораторная 1 часть 2, т.е. script1_1.sci
+            if script_name == "script1_1.sci":
+                df.columns = ["t", "rk4", "ode"]
+                # Первый график: метод Рунге–Кутта 4-го порядка
+                plt.figure()
+                plt.plot(df["t"], df["rk4"], "b-")
+                plt.xlabel("t")
+                plt.ylabel("x1 (RK4)")
+                plt.title("Решение ОДУ методом Рунге–Кутта 4-го порядка")
+                plt.grid(True)
+                plt.savefig(OUTPUT_PNG1)
+                output_png1 = OUTPUT_PNG1
 
-            plt.figure()
-            plt.plot(df["t"], df["y"], "b-")
-            plt.xlabel("t")
-            plt.ylabel("y(t)")
-            plt.title("Решение ОДУ методом Адамса-Мултона")
-            plt.grid(True)
-            plt.savefig(OUTPUT_PNG)
+                # Второй график: встроенная функция ode
+                plt.figure()
+                plt.plot(df["t"], df["ode"], "r-")
+                plt.xlabel("t")
+                plt.ylabel("x1 (ode)")
+                plt.title("Решение ОДУ встроенной функцией ode")
+                plt.grid(True)
+                plt.savefig(OUTPUT_PNG2)
+                output_png2 = OUTPUT_PNG2
+            else:
+                df.columns = ["t", "y"]
+                plt.figure()
+                plt.plot(df["t"], df["y"], "b-")
+                plt.xlabel("t")
+                plt.ylabel("y(t)")
+                plt.title("Решение ОДУ")
+                plt.grid(True)
+                plt.savefig(OUTPUT_PNG)
+                output_png1 = OUTPUT_PNG
 
-        return jsonify({"status": "success", "csv": OUTPUT_CSV, "image": OUTPUT_PNG})
+        result_json = {"status": "success", "csv": OUTPUT_CSV}
+        if output_png2:
+            result_json["image1"] = output_png1
+            result_json["image2"] = output_png2
+        else:
+            result_json["image"] = output_png1
+
+        return jsonify(result_json)
     
     except Exception as e:
         app.logger.error(f"Error while running script: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
-        
 @app.route("/download", methods=["GET"])
 def download_file():
     file_path = request.args.get("file")
