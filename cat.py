@@ -1,7 +1,6 @@
 import os
 import subprocess
 import pandas as pd
-import matplotlib.pyplot as plt
 from flask import Flask, jsonify, request, abort, send_file
 from flask_cors import CORS
 
@@ -9,11 +8,8 @@ app = Flask(__name__)
 CORS(app)
 
 SCRIPTS_DIR = "/home/scilab_scripts"
-OUTPUT_CSV = os.path.join(SCRIPTS_DIR, "output.csv")
-# Для графиков зададим отдельные имена
-OUTPUT_PNG = os.path.join(SCRIPTS_DIR, "output.png")
-OUTPUT_PNG1 = os.path.join(SCRIPTS_DIR, "output1.png")
-OUTPUT_PNG2 = os.path.join(SCRIPTS_DIR, "output2.png")
+OUTPUT_LU_CSV = os.path.join(SCRIPTS_DIR, "LU_result.csv")
+OUTPUT_QR_CSV = os.path.join(SCRIPTS_DIR, "QR_result.csv")
 
 @app.route('/get_scripts', methods=['GET'])
 def get_scripts():
@@ -70,50 +66,8 @@ def run_script():
 
         app.logger.info("Script executed successfully.")
 
-        # Построение графиков из CSV
-        output_png1 = None
-        output_png2 = None
-        if os.path.exists(OUTPUT_CSV):
-            df = pd.read_csv(OUTPUT_CSV, header=None)
-            # Если запускается лабораторная 1 часть 2, т.е. script1_1.sci
-            if script_name == "script1_1.sci":
-                df.columns = ["t", "rk4", "ode"]
-                # Первый график: метод Рунге–Кутта 4-го порядка
-                plt.figure()
-                plt.plot(df["t"], df["rk4"], "b-")
-                plt.xlabel("t")
-                plt.ylabel("x1 (RK4)")
-                plt.title("Решение ОДУ методом Рунге–Кутта 4-го порядка")
-                plt.grid(True)
-                plt.savefig(OUTPUT_PNG1)
-                output_png1 = OUTPUT_PNG1
-
-                # Второй график: встроенная функция ode
-                plt.figure()
-                plt.plot(df["t"], df["ode"], "r-")
-                plt.xlabel("t")
-                plt.ylabel("x1 (ode)")
-                plt.title("Решение ОДУ встроенной функцией ode")
-                plt.grid(True)
-                plt.savefig(OUTPUT_PNG2)
-                output_png2 = OUTPUT_PNG2
-            else:
-                df.columns = ["t", "y"]
-                plt.figure()
-                plt.plot(df["t"], df["y"], "b-")
-                plt.xlabel("t")
-                plt.ylabel("y(t)")
-                plt.title("Решение ОДУ")
-                plt.grid(True)
-                plt.savefig(OUTPUT_PNG)
-                output_png1 = OUTPUT_PNG
-
-        result_json = {"status": "success", "csv": OUTPUT_CSV}
-        if output_png2:
-            result_json["image1"] = output_png1
-            result_json["image2"] = output_png2
-        else:
-            result_json["image"] = output_png1
+        # Возврат файлов для скачивания
+        result_json = {"status": "success", "LU_csv": OUTPUT_LU_CSV, "QR_csv": OUTPUT_QR_CSV}
 
         return jsonify(result_json)
     
@@ -128,15 +82,6 @@ def download_file():
         return "Ошибка: файл не найден", 404
 
     return send_file(file_path, as_attachment=True)
-    
-@app.route('/login', methods=['POST'])
-def login():
-    username = request.form.get('username')
-    password = request.form.get('password')
-    if username == "admin" and password == "admin":
-        return jsonify({"status": "success"})
-    else:
-        return jsonify({"status": "error", "message": "Invalid credentials"}), 401
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
